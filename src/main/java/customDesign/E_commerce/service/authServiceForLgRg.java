@@ -1,18 +1,30 @@
 package customDesign.E_commerce.service;
 
+import customDesign.E_commerce.Exceptions.BadRequestException;
 import customDesign.E_commerce.Exceptions.ResourceNotFoundException;
 import customDesign.E_commerce.Exceptions.UserAlreadyFound;
 import customDesign.E_commerce.Exceptions.UserNotFoundException;
 import customDesign.E_commerce.dto.*;
+import customDesign.E_commerce.entity.PasswordResetToken;
 import customDesign.E_commerce.entity.Role;
 import customDesign.E_commerce.entity.User;
+import customDesign.E_commerce.repository.PasswordResetTokenRepository;
 import customDesign.E_commerce.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.Optional;
 
 @Service
@@ -23,10 +35,26 @@ public class authServiceForLgRg {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    TokenService tokenService;
+
+    @Autowired
+    PasswordResetTokenRepository resetTokenRepository;
+
+    @Autowired
+    MailService mailService;
+
+    @Value("${app.frontend-url}")
+    String frontendUrl;
+
+    @Value("${app.mail.from}")
+    private String from;
 
     public authServiceForLgRg(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
+
+    private static final Duration TOKEN_TTL = Duration.ofMinutes(10);
 
     @Transactional
     public RegisterResponse registerBuyer(RegisterRequest request) {
@@ -45,53 +73,107 @@ public class authServiceForLgRg {
         return new RegisterResponse(savedUser.getName(), savedUser.getEmail(), savedUser.getRole().name(), message);
     }
 
-    public LoginResponse login(LoginRequest request) {
-        Optional<User> user = userRepository.findByEmail(request.getEmail());
-        LoginResponse response = new LoginResponse();
-        if (user.isPresent()) {
-            if ((request.getEmail().equalsIgnoreCase(user.get().getEmail())) && passwordEncoder.matches(request.getPassword(), user.get().getPassword())) {
-                response.setAccessToken("accessToken");
-                response.setRefreshToken("refreshToken");
-                response.setExpiresIn(3600);
-                response.setUser(user.get());
-            }
-        }else{
-            throw new UserNotFoundException("User is not registered with this email: " + request.getEmail());
+    public LoginResponse login(LoginRequest request) throws BadRequestException {
+
+        // 1. Find user by email
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "Invalid email or password"
+                        )
+                );
+
+        // 2. Validate password
+        if (!passwordEncoder.matches(
+                request.getPassword(),
+                user.getPassword())) {
+
+            throw new BadRequestException("Invalid email or password");
         }
+
+        // 3. Generate JWT tokens
+        LoginResponse response = new LoginResponse();
+
+        response.setAccessToken(
+                tokenService.generateToken(user)
+        );
+
+        response.setRefreshToken(
+                tokenService.refreshToken(user)
+        );
+
+        // 4. Token expiration
+        response.setExpiresIn(3600);
+
+        // 5. Set safe user response
+        response.setUser(user);
+
         return response;
     }
-    public LoginResponse refreshToken(String refreshTokenRequest) {
+    public LoginResponse refreshToken(String token) {
+        String email = tokenService.ExtractEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException("User not found"));
+
         LoginResponse response = new LoginResponse();
-        response.setAccessToken("accessToken");
-        response.setRefreshToken(Math.random()*1000+" "+refreshTokenRequest);
+        response.setAccessToken(tokenService.generateToken(user));
+        response.setRefreshToken(tokenService.refreshToken(user));
         response.setExpiresIn(3600);
         return response;
     }
+    @Transactional
     public String forgetPassword(ForgetPasswordRequest request) {
-        if(userRepository.findByEmail(request.getEmail()).isPresent()){
-            return "Password reset link sent to email: " + request.getEmail();
-        }else{
-            throw new UserNotFoundException("User is not registered with this email: " + request.getEmail());
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            resetTokenRepository.deleteByUser(user);   // remove older links
+
+            byte[] bytes = new byte[32];
+            new SecureRandom().nextBytes(bytes);
+            String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
+            PasswordResetToken t = new PasswordResetToken();
+            t.setUser(user);
+            t.setTokenHash(sha256(rawToken));
+            t.setExpiresAt(Instant.now().plus(TOKEN_TTL));   // now + 10 minutes
+            resetTokenRepository.save(t);
+
+            String link = frontendUrl + "/reset-password?token=" + rawToken;
+            System.out.println("RESET LINK (dev only): " + link);
+            mailService.sendEmail(from, user.getEmail(), "Password Reset Request", link);
+        });
+        return "If an account exists for this email, a reset link has been sent.";
+    }
+
+    @Transactional
+    public String resetPassword(ResetPasswordRequest request) throws BadRequestException {
+        if (request.getToken() == null || request.getNewPassword() == null) {
+            throw new BadRequestException("Token and new password must not be null");
         }
 
-    }
-    public String resetPassword(ResetPasswordRequest request) {
-        String email = request.getEmail();
-        String newPassword = request.getNewPassword();
-        if (email == null || newPassword == null) {
-            throw new ResourceNotFoundException("Email and new password must not be null");
+        PasswordResetToken t = resetTokenRepository.findByTokenHash(sha256(request.getToken()))
+                .orElseThrow(() -> new BadRequestException("Invalid or expired link"));
+
+        if (t.getExpiresAt().isBefore(Instant.now())) {
+            resetTokenRepository.delete(t);
+            throw new BadRequestException("Invalid or expired link");
         }
-        if (!userRepository.findByEmail(email).isPresent()) {
-            throw new UserNotFoundException("User is not registered with this email: " + email);
+
+        User user = t.getUser();
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new BadRequestException("New password must be different from old password");
         }
-        String oldPassword = userRepository.findByEmail(email).get().getPassword();
-        if (oldPassword.equals(newPassword)) {
-            throw new ResourceNotFoundException("New password must be different from the old password");
-        }
-        User user = userRepository.findByEmail(email).get();
-        user.setPassword(newPassword);
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-        return "Password reset successfully for email: " + email;
+        resetTokenRepository.delete(t);   // link can be used only once
+        return "Password reset successfully";
+    }
+
+    private static String sha256(String value) {
+        try {
+            byte[] d = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(d);
+        } catch (NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
     }
 
 }

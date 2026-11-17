@@ -14,9 +14,10 @@ public class SecurityConfig {
        http.csrf(customizer->customizer.disable())
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers("/api/auth/**",  "/swagger-ui/**",  "/swagger-ui.html",
-                        "/swagger-ui/**",  "/swagger-ui.html",  "/api-docs",  "/api-docs/**",  "/v3/api-docs/**",
+                        "/swagger-ui/**",  "/swagger-ui.html", "/error","/reset-password", "/api-docs",  "/api-docs/**",  "/v3/api-docs/**",
                         "/h2-console/**")
                         .permitAll()
+                        .requestMatchers("/reset-password" ).permitAll()
                         .anyRequest()
                         .authenticated())
                          .httpBasic(customizer->customizer.disable())
