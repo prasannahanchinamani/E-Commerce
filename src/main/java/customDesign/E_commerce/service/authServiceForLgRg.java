@@ -124,26 +124,29 @@ public class authServiceForLgRg {
     }
     @Transactional
     public String forgetPassword(ForgetPasswordRequest request) {
-        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
-            resetTokenRepository.deleteByUser(user);   // remove older links
 
-            byte[] bytes = new byte[32];
-            new SecureRandom().nextBytes(bytes);
-            String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-
-            PasswordResetToken t = new PasswordResetToken();
-            t.setUser(user);
-            t.setTokenHash(sha256(rawToken));
-            t.setExpiresAt(Instant.now().plus(TOKEN_TTL));   // now + 10 minutes
-            resetTokenRepository.save(t);
-
-            String link = frontendUrl + "/reset-password?token=" + rawToken;
-            System.out.println("RESET LINK (dev only): " + link);
-            mailService.sendEmail(from, user.getEmail(), "Password Reset Request", link);
-        });
-        return "If an account exists for this email, a reset link has been sent.";
+        // 1. Check whether the email exists
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException( "User not found with email: " + request.getEmail() ));
+        // 2. Delete previous reset tokens
+        resetTokenRepository.deleteByUser(user);
+        // 3. Generate secure random token
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        // 4. Create password reset token
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setTokenHash(sha256(rawToken));
+        resetToken.setExpiresAt(Instant.now().plus(TOKEN_TTL));
+        // 5. Save token in database
+        resetTokenRepository.saveAndFlush(resetToken);
+        // 6. Generate reset link
+        String link = frontendUrl + "/reset-password?token=" + rawToken;
+        // 7. Send email
+        mailService.sendEmail( from, user.getEmail(),"Password Reset Request", link);
+        return "Password reset link sent successfully to " + user.getEmail();
     }
-
     @Transactional
     public String resetPassword(ResetPasswordRequest request) throws BadRequestException {
         if (request.getToken() == null || request.getNewPassword() == null) {

@@ -89,11 +89,13 @@ public final class ResetPasswordPageTemplate {
                     <form id="f">
                         <label>New password</label>
                         <input id="pw" type="password"
-                               minlength="6" required autocomplete="new-password">
+                               minlength="6" required
+                               autocomplete="new-password">
 
                         <label>Confirm password</label>
                         <input id="pw2" type="password"
-                               minlength="6" required autocomplete="new-password">
+                               minlength="6" required
+                               autocomplete="new-password">
 
                         <button id="btn" type="submit">
                             Reset password
@@ -111,6 +113,10 @@ public final class ResetPasswordPageTemplate {
                     const btn = document.getElementById('btn');
                     const form = document.getElementById('f');
 
+                    const pw = document.getElementById('pw');
+                    const pw2 = document.getElementById('pw2');
+
+                    // Check whether the reset token exists
                     if (!token) {
                         msg.className = 'err';
                         msg.textContent =
@@ -118,17 +124,42 @@ public final class ResetPasswordPageTemplate {
                         btn.disabled = true;
                     }
 
+                    // Validate password confirmation while typing
+                    function validatePasswordMatch() {
+
+                        if (pw2.value === '') {
+                            msg.textContent = '';
+                            msg.className = '';
+                            return;
+                        }
+
+                        if (pw.value === pw2.value) {
+                            msg.className = 'ok';
+                            msg.textContent = 'Passwords match.';
+                        } else {
+                            msg.className = 'err';
+                            msg.textContent = 'Passwords do not match.';
+                        }
+                    }
+
+                    pw.addEventListener('input', validatePasswordMatch);
+                    pw2.addEventListener('input', validatePasswordMatch);
+
+                    // Submit reset password request
                     form.addEventListener('submit', async (e) => {
+
                         e.preventDefault();
 
                         if (!token) return;
 
-                        const pw = document.getElementById('pw').value;
-                        const pw2 = document.getElementById('pw2').value;
+                        const newPassword = pw.value;
+                        const confirmPassword = pw2.value;
 
-                        if (pw !== pw2) {
+                        // Confirm password validation
+                        if (newPassword !== confirmPassword) {
                             msg.className = 'err';
-                            msg.textContent = 'Passwords do not match.';
+                            msg.textContent =
+                                'New password and confirm password must match.';
                             return;
                         }
 
@@ -146,7 +177,7 @@ public final class ResetPasswordPageTemplate {
                                     },
                                     body: JSON.stringify({
                                         token: token,
-                                        newPassword: pw
+                                        newPassword: newPassword
                                     })
                                 }
                             );
@@ -159,6 +190,7 @@ public final class ResetPasswordPageTemplate {
                             }
 
                             if (res.ok) {
+
                                 msg.className = 'ok';
                                 msg.textContent =
                                     (body.data ||
@@ -166,9 +198,14 @@ public final class ResetPasswordPageTemplate {
                                     '. You can now log in.';
 
                                 form.style.display = 'none';
+
                             } else {
+
                                 msg.className = 'err';
+
+                                // Display backend validation message
                                 msg.textContent =
+                                    body.message ||
                                     body.data ||
                                     'Invalid or expired link. Please request a new one.';
 
@@ -176,6 +213,7 @@ public final class ResetPasswordPageTemplate {
                             }
 
                         } catch (err) {
+
                             msg.className = 'err';
                             msg.textContent =
                                 'Could not reach the server.';
