@@ -20,4 +20,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<String>> handleResourceNotFoundException(ResourceNotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false, ex.getMessage()));
     }
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiResponse<String>>handlerBadRequestException(BadRequestException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false,ex.getMessage()));
+    }
+    @ExceptionHandler(NotAllowedFileException.class)
+    public ResponseEntity<ApiResponse<String>>handleNotAllowedFileException(NotAllowedFileException ex){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false,ex.getMessage()));
+    }
+
 }

@@ -1,7 +1,9 @@
 package customDesign.E_commerce.controller;
 
+import customDesign.E_commerce.dto.AccountResponse;
 import customDesign.E_commerce.dto.ApiResponse;
 import customDesign.E_commerce.dto.ChangePasswordRequest;
+import customDesign.E_commerce.dto.UpdateAccountRequest;
 import customDesign.E_commerce.service.UserService;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,5 +27,15 @@ public class AccountController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logout() {
         return ResponseEntity.ok(new ApiResponse<>(true, "Logged out successfully"));
+    }
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<AccountResponse>> me(
+            Authentication authentication) {
+        return ResponseEntity.ok(new ApiResponse<>(true,
+                userService.getMyAccount(authentication.getName())));
+    }
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<AccountResponse>>updateMe(@RequestBody UpdateAccountRequest updateAccountRequest,Authentication authentication){
+        return ResponseEntity.ok(new ApiResponse<>(true,userService.updateMyAccount(authentication.getName(),updateAccountRequest)));
     }
 }

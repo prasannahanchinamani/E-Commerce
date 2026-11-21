@@ -14,6 +14,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+/*
+web authentication  Details source class use that its easy and not only mail check all user details
+ */
+
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -33,14 +37,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        System.out.println(">>> FILTER HIT: " + request.getRequestURI());
-        System.out.println(">>> HEADER: " + header);
+       // System.out.println(">>> FULL TOKEN: [" + header + "]");
 
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 String token = header.substring(7);
                 String email = tokenService.ExtractEmailFromToken(token);
-                System.out.println(">>> EMAIL: " + email);
                 User user = userRepository.findByEmail(email).orElse(null);
 
                 if (user != null &&
@@ -50,12 +52,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             email,
                             null,
                             List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    System.out.println(">>> AUTH SET for: " + email);
                 }
             } catch (Exception ignored) {
-                // expired or invalid token — context stays empty → Spring returns 401
+              //  System.out.println(">>> TOKEN ERROR: " + ignored.getMessage());
+
             }
         }
 

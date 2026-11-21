@@ -5,6 +5,12 @@ public class ChangePasswordRequest {
     private String currentPassword;
     private String newPassword;
 
+    public ChangePasswordRequest(String currentPassword, String newPassword, String confirmPassword) {
+        this.currentPassword = currentPassword;
+        this.newPassword = newPassword;
+        this.confirmPassword = confirmPassword;
+    }
+
     public String getConfirmPassword() {
         return confirmPassword;
     }

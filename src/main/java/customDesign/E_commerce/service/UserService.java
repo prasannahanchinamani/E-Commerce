@@ -1,13 +1,18 @@
 package customDesign.E_commerce.service;
 
 import customDesign.E_commerce.Exceptions.UserNotFoundException;
+import customDesign.E_commerce.dto.AccountResponse;
 import customDesign.E_commerce.dto.ChangePasswordRequest;
+import customDesign.E_commerce.dto.UpdateAccountRequest;
 import customDesign.E_commerce.entity.User;
 import customDesign.E_commerce.repository.UserRepository;
-import jakarta.transaction.Transactional;
+//import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService{
@@ -35,6 +40,25 @@ public class UserService{
         user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
         return "Password changed successfully";
+    }
+     @Transactional(readOnly = true)
+     public AccountResponse getMyAccount(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return new AccountResponse( user.getId(), user.getName(), user.getEmail(), user.getNumber(),user.getRole() );
+    }
+
+    @Transactional
+    public AccountResponse updateMyAccount(String email, UpdateAccountRequest req) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setName(req.getName().trim());
+        if (req.getPhone() != null) {
+            user.setNumber(Long.parseLong(req.getPhone().replaceAll("\\+", "")));
+        }
+        userRepository.save(user);
+        return new AccountResponse( user.getId(), user.getName(), user.getEmail(), user.getNumber(), user.getRole());
     }
 
 }

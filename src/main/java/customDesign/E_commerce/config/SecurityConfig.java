@@ -33,7 +33,7 @@ public class SecurityConfig {
                                 "/api-docs/**",
                                 "/h2-console/**"
                         ).permitAll()
-                        .anyRequest().authenticated()   // /api/account/** is now protected
+                        .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable())
                 .exceptionHandling(e -> e
