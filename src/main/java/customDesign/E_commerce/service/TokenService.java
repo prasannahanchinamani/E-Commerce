@@ -32,7 +32,7 @@ public class TokenService {
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 30))
-                .signWith(generateTokenKey())
+                .signWith(generateTokenKey(), Jwts.SIG.HS512)
                 .compact();
     }
 
@@ -48,16 +48,20 @@ public class TokenService {
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1))
-                .signWith(generateTokenKey())
+                .signWith(generateTokenKey(), Jwts.SIG.HS512)
                 .compact();
     }
 
-    private Key generateTokenKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    // change return type from Key to SecretKey
+    private SecretKey generateTokenKey() {
+        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
+        byte[] fixedKey = new byte[64];  // 64 bytes = 512 bits for HS512
+        System.arraycopy(keyBytes, 0, fixedKey, 0, Math.min(keyBytes.length, 64));
+        return Keys.hmacShaKeyFor(fixedKey);
     }
     public String ExtractEmailFromToken(String token){
         return Jwts.parser()
-                .verifyWith((SecretKey) generateTokenKey())
+                .verifyWith(generateTokenKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
