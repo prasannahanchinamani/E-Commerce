@@ -3,12 +3,14 @@ package customDesign.E_commerce.config;
 import customDesign.E_commerce.filter.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -33,6 +35,8 @@ public class SecurityConfig {
                                 "/api-docs/**",
                                 "/h2-console/**"
                         ).permitAll()
+                        .requestMatchers("/api/buyer/**").hasRole("BUYER")
+                        .requestMatchers("/api/seller/**").hasRole("SELLER")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable())
