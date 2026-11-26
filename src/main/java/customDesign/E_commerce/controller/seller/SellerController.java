@@ -7,7 +7,6 @@ import customDesign.E_commerce.dto.PortfolioResponse;
 import customDesign.E_commerce.dto.seller.SellerApplyRequest;
 import customDesign.E_commerce.dto.seller.SellerProfileResponse;
 import customDesign.E_commerce.dto.seller.SellerProfileUpdateRequest;
-import customDesign.E_commerce.entity.User;
 import customDesign.E_commerce.entity.Product;
 import customDesign.E_commerce.service.seller.SellerService;
 import org.springframework.http.HttpStatus;
@@ -17,7 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/seller")
+@RequestMapping("/api/v1/seller")
 public class SellerController {
 
     private final SellerService sellerService;
@@ -34,12 +33,13 @@ public class SellerController {
     }
 
     @PostMapping("/apply")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<ApiResponse<User>> apply(
-            @RequestBody SellerApplyRequest request,
+    @PreAuthorize("hasAnyRole('BUYER','SELLER')")
+    public ResponseEntity<ApiResponse<SellerProfileResponse>> apply(
+            @jakarta.validation.Valid @RequestBody SellerApplyRequest request,
             Authentication authentication) {
-        User user = sellerService.applyAsSeller(authentication.getName(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, user));
+        sellerService.applyAsSeller(authentication.getName(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true,
+                sellerService.getProfile(authentication.getName())));
     }
     @GetMapping("/profile")
     @PreAuthorize("hasRole('SELLER')")
@@ -50,7 +50,7 @@ public class SellerController {
     @PutMapping("/profile")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<SellerProfileResponse>> updateProfile(
-            @RequestBody SellerProfileUpdateRequest request,
+            @jakarta.validation.Valid @RequestBody SellerProfileUpdateRequest request,
             Authentication authentication) {
         SellerProfileResponse profile = sellerService.updateProfile(authentication.getName(), request);
         return ResponseEntity.ok(new ApiResponse<>(true, profile));
@@ -103,7 +103,7 @@ public class SellerController {
     @PostMapping("/portfolio")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<PortfolioResponse>> addPortfolio(
-            @RequestBody PortfolioRequest request,
+            @jakarta.validation.Valid @RequestBody PortfolioRequest request,
             Authentication authentication) {
         PortfolioResponse response = sellerService.addPortfolio(authentication.getName(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, response));

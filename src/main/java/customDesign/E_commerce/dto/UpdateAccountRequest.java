@@ -1,6 +1,8 @@
 package customDesign.E_commerce.dto;
 
 public class UpdateAccountRequest {
+    @jakarta.validation.constraints.NotBlank(message = "name is required")
+    @jakarta.validation.constraints.Size(max = 100, message = "name must be at most 100 characters")
     private String name;
     private String phone;
 

@@ -37,15 +37,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        System.out.println(">>> FULL TOKEN: [" + header + "]");
+        org.slf4j.Logger jwtLogger = org.slf4j.LoggerFactory.getLogger(JwtAuthFilter.class);
 
         if (header != null && header.startsWith("Bearer ")) {
             try {
                 String token = header.substring(7);
                 String email = tokenService.ExtractEmailFromToken(token);
+                if (!tokenService.isAccessToken(token)) {
+                    jwtLogger.warn("Request rejected: bearer credential is not an access token, uri={}", request.getRequestURI());
+                    chain.doFilter(request, response);
+                    return;
+                }
                 User user = userRepository.findByEmail(email).orElse(null);
-                new SimpleGrantedAuthority("ROLE_____" + user.getRole().name());
-                System.out.println(">>> ROLE TOKEN: [" + user.getRole().name() + "]");
                 if (user != null &&
                         SecurityContextHolder.getContext().getAuthentication() == null) {
 
@@ -57,9 +60,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     );
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
-            } catch (Exception ignored) {
-              //  System.out.println(">>> TOKEN ERROR: " + ignored.getMessage());
-
+            } catch (Exception ex) {
+                jwtLogger.warn("Invalid or expired bearer token, uri={}", request.getRequestURI());
             }
         }
 

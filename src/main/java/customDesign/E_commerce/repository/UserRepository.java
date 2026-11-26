@@ -39,4 +39,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findByMediatorIdAndRole(Long mediatorId, Role role, Pageable pageable);
 
     Page<User> findByMediatorIdAndRoleAndStatus(Long mediatorId, Role role, String status, Pageable pageable);
+
+    Page<User> findByRole(Role role, Pageable pageable);
+    Page<User> findByStatus(String status, Pageable pageable);
+    Page<User> findByRoleAndStatus(Role role, String status, Pageable pageable);
+
+    @Query("select u from User u where (:role is null or u.role = :role) and (:status is null or u.status = :status) and (:q is null or lower(u.name) like lower(concat('%', :q, '%')) or lower(u.email) like lower(concat('%', :q, '%')))")
+    Page<User> searchAdmin(@Param("role") Role role,
+                           @Param("status") String status,
+                           @Param("q") String q,
+                           Pageable pageable);
 }

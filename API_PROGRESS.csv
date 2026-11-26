@@ -1,0 +1,191 @@
+API ID,Method,Endpoint,Controller,Service,Repository,Request DTO,Response DTO,Security,Tests,Status
+API-001,IMPLEMENTED
+API-002,IMPLEMENTED
+API-003,IMPLEMENTED
+API-004,IMPLEMENTED
+API-005,IMPLEMENTED
+API-006,IMPLEMENTED
+API-007,,,,,,,,,,Not Started
+API-008,,,,,,,,,,Not Started
+API-009,IMPLEMENTED
+API-010,,,,,,,,,,Implemented
+API-011,,,,,,,,,,Implemented
+API-012,,,,,,,,,,Implemented
+API-013,,,,,,,,,,Not Started
+API-014,,,,,,,,,,Not Started
+API-015,,,,,,,,,,Not Started
+API-016,,,,,,,,,,Not Started
+API-017,,,,,,,,,,Not Started
+API-018,,,,,,,,,,Not Started
+API-019,IMPLEMENTED
+API-020,IMPLEMENTED
+API-021,IMPLEMENTED
+API-022,IMPLEMENTED
+API-023,IMPLEMENTED
+API-024,IMPLEMENTED
+API-025,,,,,,,,,,Not Started
+API-026,,,,,,,,,,Not Started
+API-027,,,,,,,,,,Not Started
+API-028,,,,,,,,,,Not Started
+API-029,,,,,,,,,,Not Started
+API-030,,,,,,,,,,Not Started
+API-031,IMPLEMENTED
+API-032,,,,,,,,,,Not Started
+API-033,IMPLEMENTED
+API-034,IMPLEMENTED
+API-035,,,,,,,,,,Not Started
+API-036,,,,,,,,,,Not Started
+API-037,,,,,,,,,,Not Started
+API-038,,,,,,,,,,Not Started
+API-039,,,,,,,,,,Not Started
+API-040,,,,,,,,,,Not Started
+API-041,,,,,,,,,,Not Started
+API-042,,,,,,,,,,Not Started
+API-043,,,,,,,,,,Not Started
+API-044,,,,,,,,,,Not Started
+API-045,,,,,,,,,,Not Started
+API-046,,,,,,,,,,Not Started
+API-047,,,,,,,,,,Not Started
+API-048,,,,,,,,,,Not Started
+API-049,,,,,,,,,,Not Started
+API-050,,,,,,,,,,In Progress
+API-051,,,,,,,,,,In Progress
+API-052,,,,,,,,,,In Progress
+API-053,,,,,,,,,,In Progress
+API-054,,,,,,,,,,In Progress
+API-055,,,,,,,,,,Not Started
+API-056,,,,,,,,,,Not Started
+API-057,,,,,,,,,,Not Started
+API-058,,,,,,,,,,Not Started
+API-059,,,,,,,,,,Not Started
+API-060,,,,,,,,,,Not Started
+API-061,,,,,,,,,,Not Started
+API-062,,,,,,,,,,Not Started
+API-063,,,,,,,,,,Not Started
+API-064,,,,,,,,,,Not Started
+API-065,,,,,,,,,,Not Started
+API-066,,,,,,,,,,Not Started
+API-067,IMPLEMENTED
+API-068,IMPLEMENTED
+API-069,IMPLEMENTED
+API-070,,,,,,,,,,Not Started
+API-071,,,,,,,,,,Not Started
+API-072,IMPLEMENTED
+API-073,,,,,,,,,,Not Started
+API-074,,,,,,,,,,Partially Implemented
+API-075,,,,,,,,,,Partially Implemented
+API-076,,,,,,,,,,Partially Implemented
+API-077,,,,,,,,,,Partially Implemented
+API-078,,,,,,,,,,Partially Implemented
+API-079,,,,,,,,,,Not Started
+API-080,,,,,,,,,,Not Started
+API-081,,,,,,,,,,Not Started
+API-082,,,,,,,,,,Not Started
+API-083,,,,,,,,,,Not Started
+API-084,,,,,,,,,,Not Started
+API-085,,,,,,,,,,Not Started
+API-086,,,,,,,,,,Not Started
+API-087,,,,,,,,,,Not Started
+API-088,,,,,,,,,,Not Started
+API-089,,,,,,,,,,Not Started
+API-090,,,,,,,,,,Not Started
+API-091,,,,,,,,,,Not Started
+API-092,,,,,,,,,,Not Started
+API-093,,,,,,,,,,Not Started
+API-094,,,,,,,,,,Not Started
+API-095,,,,,,,,,,Not Started
+API-096,,,,,,,,,,Not Started
+API-097,,,,,,,,,,Not Started
+API-098,,,,,,,,,,Not Started
+API-099,,,,,,,,,,Not Started
+API-100,,,,,,,,,,Not Started
+API-101,,,,,,,,,,Not Started
+API-102,,,,,,,,,,Not Started
+API-103,,,,,,,,,,Not Started
+API-104,,,,,,,,,,Not Started
+API-105,IMPLEMENTED
+API-106,IMPLEMENTED
+API-107,IMPLEMENTED
+API-108,IMPLEMENTED
+API-109,IMPLEMENTED
+API-110,IMPLEMENTED
+API-111,,,,,,,,,,Not Started
+API-112,,,,,,,,,,Not Started
+API-113,,,,,,,,,,Not Started
+API-114,,,,,,,,,,Not Started
+API-115,,,,,,,,,,Not Started
+API-116,,,,,,,,,,Not Started
+API-117,,,,,,,,,,Not Started
+API-118,,,,,,,,,,Not Started
+API-119,,,,,,,,,,Not Started
+API-120,,,,,,,,,,Not Started
+API-121,,,,,,,,,,Not Started
+API-122,,,,,,,,,,Not Started
+API-123,,,,,,,,,,Not Started
+API-124,,,,,,,,,,Not Started
+API-125,IMPLEMENTED
+API-126,IMPLEMENTED
+API-127,IMPLEMENTED
+API-128,IMPLEMENTED
+API-129,IMPLEMENTED
+API-130,IMPLEMENTED
+API-131,IMPLEMENTED
+API-132,IMPLEMENTED
+API-133,IMPLEMENTED
+API-134,IMPLEMENTED
+API-135,IMPLEMENTED
+API-136,IMPLEMENTED
+API-137,,,,,,,,,,Not Started
+API-138,,,,,,,,,,Not Started
+API-139,,,,,,,,,,Not Started
+API-140,,,,,,,,,,Not Started
+API-141,,,,,,,,,,Not Started
+API-142,,,,,,,,,,Not Started
+API-143,,,,,,,,,,Not Started
+API-144,,,,,,,,,,Not Started
+API-145,,,,,,,,,,Not Started
+API-146,,,,,,,,,,Not Started
+API-147,,,,,,,,,,Not Started
+API-148,,,,,,,,,,Not Started
+API-149,,,,,,,,,,Not Started
+API-150,,,,,,,,,,Not Started
+API-151,,,,,,,,,,Not Started
+API-152,,,,,,,,,,Not Started
+API-153,,,,,,,,,,Not Started
+API-154,,,,,,,,,,Not Started
+API-155,,,,,,,,,,Not Started
+API-156,,,,,,,,,,Not Started
+API-157,,,,,,,,,,Not Started
+API-158,,,,,,,,,,Not Started
+API-159,,,,,,,,,,Not Started
+API-160,,,,,,,,,,Not Started
+API-161,,,,,,,,,,Not Started
+API-162,,,,,,,,,,Not Started
+API-163,,,,,,,,,,Not Started
+API-164,,,,,,,,,,Not Started
+API-165,,,,,,,,,,Not Started
+API-166,,,,,,,,,,Not Started
+API-167,,,,,,,,,,Not Started
+API-168,,,,,,,,,,Not Started
+API-169,IMPLEMENTED
+API-170,IMPLEMENTED
+API-171,IMPLEMENTED
+API-172,,,,,,,,,,Not Started
+API-173,,,,,,,,,,Not Started
+API-174,,,,,,,,,,Not Started
+API-175,,,,,,,,,,Not Started
+API-176,,,,,,,,,,Not Started
+API-177,,,,,,,,,,Not Started
+API-178,,,,,,,,,,Not Started
+API-179,,,,,,,,,,Not Started
+API-180,,,,,,,,,,Not Started
+API-181,,,,,,,,,,Not Started
+API-182,,,,,,,,,,Not Started
+API-183,,,,,,,,,,Not Started
+API-184,,,,,,,,,,Not Started
+API-185,,,,,,,,,,Not Started
+API-186,,,,,,,,,,Not Started
+API-187,,,,,,,,,,Not Started
+API-188,,,,,,,,,,Not Started
+API-189,,,,,,,,,,Not Started
+API-190,,,,,,,,,,

@@ -7,7 +7,7 @@ public class LoginResponse {
     private String refreshToken;
     private String tokenType;
     private long expiresIn;
-    private User user;
+    private AuthUserResponse user;
 
     public String getAccessToken() {
         return accessToken;
@@ -41,11 +41,9 @@ public class LoginResponse {
         this.expiresIn = expiresIn;
     }
 
-    public User getUser() {
-        return user;
-    }
+    public AuthUserResponse getUser() { return user; }
 
     public void setUser(User user) {
-        this.user = user;
+        this.user = new AuthUserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
 }

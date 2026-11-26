@@ -15,6 +15,21 @@ public class ProductCategory {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(unique = true)
+    private String slug;
+
+    @Column(length = 1000)
+    private String description;
+
+    private String imageUrl;
+
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
     public Long getId() {
         return id;
     }

@@ -3,6 +3,15 @@ package customDesign.E_commerce.service.buyer;
 import customDesign.E_commerce.dto.AddressRequest;
 import customDesign.E_commerce.entity.Address;
 import customDesign.E_commerce.repository.AddressRepository;
+import customDesign.E_commerce.repository.BuyerOrderRepository;
+import customDesign.E_commerce.repository.ProductRepository;
+import customDesign.E_commerce.repository.UserRepository;
+import customDesign.E_commerce.dto.CreateOrderRequest;
+import customDesign.E_commerce.dto.OrderResponse;
+import customDesign.E_commerce.dto.AddressResponse;
+import customDesign.E_commerce.entity.BuyerOrder;
+import customDesign.E_commerce.entity.OrderType;
+import customDesign.E_commerce.entity.OrderStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -11,9 +20,18 @@ import java.util.List;
 public class BuyerService {
 
     private final AddressRepository addressRepository;
+    private final BuyerOrderRepository buyerOrderRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
-    public BuyerService(AddressRepository addressRepository) {
+    public BuyerService(AddressRepository addressRepository,
+                        BuyerOrderRepository buyerOrderRepository,
+                        ProductRepository productRepository,
+                        UserRepository userRepository) {
         this.addressRepository = addressRepository;
+        this.buyerOrderRepository = buyerOrderRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
     }
 
     public List<Address> getAddresses(String email) {
@@ -65,6 +83,118 @@ public class BuyerService {
         }
         address.setDefault(req.isDefault());
         return addressRepository.save(address);
+    }
+
+    @Transactional
+    public OrderResponse createOrder(String email, CreateOrderRequest request) {
+        customDesign.E_commerce.entity.Product listing = productRepository.findById(request.getListingId())
+                .filter(customDesign.E_commerce.entity.Product::isActive)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Listing not found"));
+        Address address = addressRepository.findByIdAndUserEmail(request.getAddressId(), email)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Address not found"));
+
+        boolean bulk = request.getQuantity() >= 50;
+        java.math.BigDecimal unitPrice = bulk && listing.getBulkPrice() != null
+                ? listing.getBulkPrice() : listing.getPrice();
+        if (unitPrice == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Listing has no price");
+        }
+        java.math.BigDecimal amount = unitPrice.multiply(java.math.BigDecimal.valueOf(request.getQuantity()))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        java.math.BigDecimal commissionRate = bulk
+                ? new java.math.BigDecimal("0.0600")
+                : new java.math.BigDecimal("0.1000");
+        java.math.BigDecimal commissionAmount = amount.multiply(commissionRate)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        java.math.BigDecimal sellerPayout = amount.subtract(commissionAmount)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        BuyerOrder order = new BuyerOrder();
+        order.setBuyerEmail(email);
+        order.setSellerEmail(listing.getSellerEmail());
+        order.setType(bulk ? OrderType.BULK : OrderType.STANDARD);
+        order.setQuantity(request.getQuantity());
+        order.setAmount(amount);
+        order.setCommissionRate(commissionRate);
+        order.setCommissionAmount(commissionAmount);
+        order.setSellerPayout(sellerPayout);
+        order.setStatus(OrderStatus.AWAITING_PAYMENT);
+        order.setAddress(address);
+        order.setNote(request.getNote());
+        return toOrderResponse(buyerOrderRepository.save(order));
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<OrderResponse> listOrders(String email, String status,
+                                                                          org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<BuyerOrder> result;
+        if (status == null || status.isBlank()) {
+            result = buyerOrderRepository.findByBuyerEmail(email, pageable);
+        } else {
+            try {
+                result = buyerOrderRepository.findByBuyerEmailAndStatus(email,
+                        OrderStatus.valueOf(status.toUpperCase()), pageable);
+            } catch (IllegalArgumentException ex) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid order status");
+            }
+        }
+        return result.map(this::toOrderResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrder(String email, Long id) {
+        BuyerOrder order = buyerOrderRepository.findByIdAndBuyerEmail(id, email)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Order not found"));
+        return toOrderResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(String email, Long id) {
+        BuyerOrder order = buyerOrderRepository.findByIdAndBuyerEmail(id, email)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Order not found"));
+        if (order.getStatus() != OrderStatus.AWAITING_PAYMENT && order.getStatus() != OrderStatus.PAID) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Order can no longer be cancelled");
+        }
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Paid orders require an admin or refund flow");
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        return toOrderResponse(buyerOrderRepository.save(order));
+    }
+
+    @Transactional
+    public OrderResponse confirmDelivery(String email, Long id) {
+        BuyerOrder order = buyerOrderRepository.findByIdAndBuyerEmail(id, email)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Order not found"));
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Order must be delivered before confirmation");
+        }
+        order.setStatus(OrderStatus.COMPLETED);
+        return toOrderResponse(buyerOrderRepository.save(order));
+    }
+
+    private OrderResponse toOrderResponse(BuyerOrder order) {
+        Address address = order.getAddress();
+        AddressResponse addressResponse = address == null ? null : new AddressResponse(address.getId(),
+                address.getLine1(), address.getLine2(), address.getCity(), address.getState(),
+                address.getPincode(), address.getPhone());
+        Long buyerId = userRepository.findByEmail(order.getBuyerEmail()).map(customDesign.E_commerce.entity.User::getId).orElse(null);
+        Long sellerId = order.getSellerEmail() == null ? null : userRepository.findByEmail(order.getSellerEmail())
+                .map(customDesign.E_commerce.entity.User::getId).orElse(null);
+        return new OrderResponse(order.getId(), buyerId, sellerId, order.getType().name(),
+                order.getQuantity(), order.getAmount(), order.getCommissionRate(),
+                order.getCommissionAmount(), order.getSellerPayout(), order.getStatus().name(),
+                addressResponse, order.getCreatedAt());
     }
 
     @Transactional

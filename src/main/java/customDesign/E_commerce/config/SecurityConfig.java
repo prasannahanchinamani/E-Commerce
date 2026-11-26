@@ -27,18 +27,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/v1/auth/**",
+                                "/api/v1/public/**",
                                 "/reset-password",
-                                "/public/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/api-docs/**",
                                 "/h2-console/**"
                         ).permitAll()
-                        .requestMatchers("/api/buyer/**").hasRole("BUYER")
-                        .requestMatchers("/api/seller/**").hasRole("SELLER")
-                        .requestMatchers("/api/mediator/**").hasRole("MEDIATOR")
+                        .requestMatchers("/api/v1/buyer/**").hasRole("BUYER")
+                        .requestMatchers("/api/v1/seller/apply").hasAnyRole("BUYER","SELLER")
+                        .requestMatchers("/api/v1/seller/**").hasRole("SELLER")
+                        .requestMatchers("/api/v1/mediator/**").hasRole("MEDIATOR")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable())

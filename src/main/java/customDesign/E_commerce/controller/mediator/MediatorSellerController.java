@@ -10,7 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/mediator/sellers")
+@RequestMapping("/api/v1/mediator/sellers")
 @PreAuthorize("hasRole('MEDIATOR')")
 public class MediatorSellerController {
 
@@ -21,7 +21,7 @@ public class MediatorSellerController {
     }
 
     @PostMapping("/invite")
-    public ResponseEntity<ApiResponse<SellerInviteResponse>> invite(@RequestBody SellerInviteRequest request) {
+    public ResponseEntity<ApiResponse<SellerInviteResponse>> invite(    @jakarta.validation.Valid @RequestBody SellerInviteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>(true, service.inviteSeller(request)));
     }
@@ -48,13 +48,13 @@ public class MediatorSellerController {
 
     @PutMapping("/{id}/reject")
     public ApiResponse<SellerStatusResponse> reject(@PathVariable Long id,
-                                                    @RequestBody SellerActionRequest req) {
+                                                    @jakarta.validation.Valid @RequestBody SellerActionRequest req) {
         return new ApiResponse<>(true, service.rejectSeller(id, req));
     }
 
     @PutMapping("/{id}/suspend")
     public ApiResponse<SellerStatusResponse> suspend(@PathVariable Long id,
-                                                     @RequestBody SellerActionRequest req) {
+                                                     @jakarta.validation.Valid @RequestBody(required=false) SellerActionRequest req) {
         return new ApiResponse<>(true, service.suspendSeller(id, req));
     }
 }

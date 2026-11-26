@@ -3,6 +3,7 @@ package customDesign.E_commerce.dto;
 import java.util.List;
 
 public class PortfolioRequest {
+    @jakarta.validation.constraints.NotBlank(message = "title is required")
     private String title;
     private List<Long> imageIds;
     private Long categoryId;

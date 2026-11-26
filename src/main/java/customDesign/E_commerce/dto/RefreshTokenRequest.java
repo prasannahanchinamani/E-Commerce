@@ -1,6 +1,7 @@
 package customDesign.E_commerce.dto;
 
 public class RefreshTokenRequest {
+    @jakarta.validation.constraints.NotBlank(message = "refreshToken is required")
     public String refreshToken;
 
 

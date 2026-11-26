@@ -104,6 +104,23 @@ public class MediaService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public void deleteOwnedMedia(Long id, String uploadedBy) {
+        Media media = mediaRepository.findByIdAndUploadedBy(id, uploadedBy)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Media not found"));
+        try {
+            if (media.getUrl() != null && media.getUrl().startsWith("/uploads/")) {
+                java.nio.file.Path path = java.nio.file.Paths.get("uploads", media.getUrl().substring("/uploads/".length()));
+                java.nio.file.Files.deleteIfExists(path);
+            }
+        } catch (java.io.IOException ex) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Unable to delete media file");
+        }
+        mediaRepository.delete(media);
+    }
+
     private MediaResponse toResponse(Media media) {
         return new MediaResponse(
                 media.getId(),

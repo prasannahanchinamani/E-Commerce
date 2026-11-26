@@ -1,9 +1,13 @@
 package customDesign.E_commerce.dto.mediator;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 
 public class SellerInviteRequest {
+    @Email(message = "email must be valid")
     private String email;
+    @Pattern(regexp = "(?:\\d{10})?", message = "phone must contain 10 digits")
     private String phone;
     private List<Long> categoryIds;
     public boolean isValidContact() {

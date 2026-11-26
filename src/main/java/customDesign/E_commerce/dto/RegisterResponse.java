@@ -6,6 +6,9 @@ public class RegisterResponse {
     private String email;
     private String role;
     private String message;
+    private Long phone;
+    private String status;
+    private java.time.Instant createdAt;
 
 
     public RegisterResponse(String fullName, String email, String role, String message) {
@@ -15,9 +18,14 @@ public class RegisterResponse {
         this.message = message;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getPhone() { return phone; }
+    public void setPhone(Long phone) { this.phone = phone; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public java.time.Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.Instant createdAt) { this.createdAt = createdAt; }
 
     public String getFullName() {
         return fullName;

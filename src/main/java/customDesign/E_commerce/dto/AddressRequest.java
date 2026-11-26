@@ -2,11 +2,16 @@ package customDesign.E_commerce.dto;
 
 public class AddressRequest {
     private String fullName;
+    @jakarta.validation.constraints.Pattern(regexp = "\\d{10}", message = "phone must contain 10 digits")
     private String phone;
+    @jakarta.validation.constraints.NotBlank(message = "line1 is required")
     private String line1;
     private String line2;
+    @jakarta.validation.constraints.NotBlank(message = "city is required")
     private String city;
+    @jakarta.validation.constraints.NotBlank(message = "state is required")
     private String state;
+    @jakarta.validation.constraints.Pattern(regexp = "\\d{6}", message = "pincode must contain 6 digits")
     private String pincode;
     private boolean isDefault;
 

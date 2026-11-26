@@ -24,16 +24,7 @@ public class TokenService {
         if(user == null){
             throw  new UserNotFoundException("User not found");
         }
-        Map<String, Object> claims  = new HashMap<>();
-        claims.put("userName", user.getName());
-        claims.put("role", user.getRole());
-        return Jwts.builder()
-                .claims(claims)
-                .subject(user.getEmail())
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 30))
-                .signWith(generateTokenKey(), Jwts.SIG.HS512)
-                .compact();
+        return buildToken(user, "access", 1000L * 60 * 15);
     }
 
     public String refreshToken(User user){

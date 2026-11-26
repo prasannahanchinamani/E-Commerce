@@ -3,12 +3,14 @@ package customDesign.E_commerce.dto.seller;
 import java.util.List;
 
 public class SellerApplyRequest {
+    @jakarta.validation.constraints.NotBlank(message = "shopName is required")
     private String shopName;
     private String bio;
     private List<Long> categoryIds;
     private List<Long> portfolioImageIds;
     private String mediatorCode;      // e.g. "MEERA-CRAFTS"
     private String accountName;
+    @jakarta.validation.constraints.Pattern(regexp = "\\d{9,18}", message = "accountNumber must contain 9 to 18 digits")
     private String accountNumber;
     private String instagramId;
 

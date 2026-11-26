@@ -1,0 +1,10 @@
+package customDesign.E_commerce.repository;
+
+import customDesign.E_commerce.entity.DesignType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DesignTypeRepository extends JpaRepository<DesignType, Long> {
+    Page<DesignType> findByCategoryIdAndActiveTrue(Long categoryId, Pageable pageable);
+}

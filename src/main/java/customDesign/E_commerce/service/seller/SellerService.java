@@ -85,6 +85,7 @@ public class SellerService {
             throw new RuntimeException("Application already submitted");
         }
 
+        user.setRole(Role.SELLER);
         user.setShopName(req.getShopName());
         user.setBio(req.getBio());
 //        user.setMediatorCode(req.getMediatorCode());

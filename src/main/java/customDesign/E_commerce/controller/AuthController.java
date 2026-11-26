@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     @Autowired
@@ -27,22 +27,33 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>>login(@Valid @RequestBody LoginRequest loginRequest) throws BadRequestException {
        LoginResponse loginResponse=registerLoginService.login(loginRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, loginResponse));
+        return ResponseEntity.ok(new ApiResponse<>(true, loginResponse));
     }
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<LoginResponse>>refreshToken(@RequestBody RefreshTokenRequest refreshTokem){
+    public ResponseEntity<ApiResponse<LoginResponse>>refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokem){
         LoginResponse loginResponse=registerLoginService.refreshToken(refreshTokem.getRefreshToken());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, loginResponse));
+        return ResponseEntity.ok(new ApiResponse<>(true, loginResponse));
     }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        registerLoginService.logout(request.getRefreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse<String>>forgetPassword(@RequestBody ForgetPasswordRequest forgetPasswordRequest){
-        String response=registerLoginService.forgetPassword(forgetPasswordRequest);
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, "Password reset link sent to email: " + forgetPasswordRequest.getEmail()));
+    public ResponseEntity<ApiResponse<String>>forgetPassword(@Valid @RequestBody ForgetPasswordRequest forgetPasswordRequest){
+        registerLoginService.forgetPassword(forgetPasswordRequest);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResponse<>(true, "If the email exists, a reset link has been sent."));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return ResponseEntity.ok(new ApiResponse<>(true, registerLoginService.verifyEmail(request)));
     }
 
     @PostMapping("/reset-password")
 
-    public ResponseEntity<ApiResponse<String>>resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) throws BadRequestException {
+    public ResponseEntity<ApiResponse<String>>resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) throws BadRequestException {
         String response=registerLoginService.resetPassword(resetPasswordRequest);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse<>(true, response));
     }

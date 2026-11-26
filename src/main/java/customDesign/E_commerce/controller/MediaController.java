@@ -20,6 +20,12 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id, org.springframework.security.core.Authentication authentication) {
+        mediaService.deleteOwnedMedia(id, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse<MediaResponse>> upload(
             @RequestParam("file") MultipartFile file,
@@ -32,6 +38,6 @@ public class MediaController {
                 file, purpose, category, orderId,
                 authentication.getName());
 
-        return ResponseEntity.ok(new ApiResponse<>(true, response));
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(new ApiResponse<>(true, response));
     }
 }

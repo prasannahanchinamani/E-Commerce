@@ -29,6 +29,20 @@ public class Product {
 
     private boolean active = true;
 
+    private Long designTypeId;
+    private java.math.BigDecimal bulkPrice;
+    private Integer minBulkQty;
+    private Integer daysToMake;
+
+    public Long getDesignTypeId() { return designTypeId; }
+    public void setDesignTypeId(Long designTypeId) { this.designTypeId = designTypeId; }
+    public java.math.BigDecimal getBulkPrice() { return bulkPrice; }
+    public void setBulkPrice(java.math.BigDecimal bulkPrice) { this.bulkPrice = bulkPrice; }
+    public Integer getMinBulkQty() { return minBulkQty; }
+    public void setMinBulkQty(Integer minBulkQty) { this.minBulkQty = minBulkQty; }
+    public Integer getDaysToMake() { return daysToMake; }
+    public void setDaysToMake(Integer daysToMake) { this.daysToMake = daysToMake; }
+
     public ProductCategory getCategory() {
         return category;
     }

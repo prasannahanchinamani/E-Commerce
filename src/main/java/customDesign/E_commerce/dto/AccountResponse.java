@@ -8,6 +8,9 @@ public class AccountResponse {
     private String email;
     private Long phone;
     private Role role;
+    private java.util.List<String> roles;
+    private boolean twoFactorEnabled;
+    private String photoUrl;
 
     public AccountResponse(Long id, String name, String email, Long phone, Role role) {
         this.id = id;
@@ -15,7 +18,17 @@ public class AccountResponse {
         this.email = email;
         this.phone = phone;
         this.role = role;
+        this.roles = role == null ? java.util.List.of() : java.util.List.of(role.name());
+        this.twoFactorEnabled = false;
+        this.photoUrl = null;
     }
+
+    public java.util.List<String> getRoles() { return roles; }
+    public boolean isTwoFactorEnabled() { return twoFactorEnabled; }
+    public String getPhotoUrl() { return photoUrl; }
+    public void setTwoFactorEnabled(boolean twoFactorEnabled) { this.twoFactorEnabled = twoFactorEnabled; }
+    public void setRoles(java.util.List<String> roles) { this.roles = roles; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 
     public Long getId() {
         return id;
