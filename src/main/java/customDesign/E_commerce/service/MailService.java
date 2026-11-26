@@ -32,4 +32,16 @@ public class MailService {
 
     }
 
+    @Async
+    public void sendInvitation(String from, String to, String subject, String link) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText("You have been invited to join the marketplace as a seller.\n\n"
+                + "Accept the invitation here: " + link + "\n\n"
+                + "This invitation is valid for six months.");
+        this.mailSender.send(message);
+    }
+
 }

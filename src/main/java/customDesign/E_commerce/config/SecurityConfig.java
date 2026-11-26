@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/reset-password",
@@ -37,6 +38,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/buyer/**").hasRole("BUYER")
                         .requestMatchers("/api/seller/**").hasRole("SELLER")
+                        .requestMatchers("/api/mediator/**").hasRole("MEDIATOR")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(h -> h.disable())

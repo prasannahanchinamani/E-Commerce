@@ -22,7 +22,7 @@ public class ProductCategoryController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductCategory>>> getAllCategories() {
 
-        List<ProductCategory> categories = categoryRepository.findAll();
+        List<ProductCategory> categories = categoryRepository.findByActiveTrue();
 
         return ResponseEntity
                 .status(HttpStatus.OK)

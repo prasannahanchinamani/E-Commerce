@@ -37,17 +37,22 @@ public class TokenService {
     }
 
     public String refreshToken(User user){
+        return buildToken(user, "refresh", 1000L * 60 * 60 * 24 * 7);
+    }
+
+    private String buildToken(User user, String tokenType, long ttlMillis) {
         if(user == null){
-            throw  new UserNotFoundException("User not found");
+            throw new UserNotFoundException("User not found");
         }
-        Map<String, Object> claims  = new HashMap<>();
+        Map<String, Object> claims = new HashMap<>();
         claims.put("userName", user.getName());
-        claims.put("role", user.getRole());
+        claims.put("role", user.getRole().name());
+        claims.put("tokenType", tokenType);
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1))
+                .expiration(new Date(System.currentTimeMillis() + ttlMillis))
                 .signWith(generateTokenKey(), Jwts.SIG.HS512)
                 .compact();
     }
@@ -66,7 +71,28 @@ public class TokenService {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
 
+    public boolean isAccessToken(String token) {
+        return isTokenType(token, "access");
+    }
+
+    public boolean isRefreshToken(String token) {
+        return isTokenType(token, "refresh");
+    }
+
+    private boolean isTokenType(String token, String expectedType) {
+        try {
+            Object tokenType = Jwts.parser()
+                    .verifyWith(generateTokenKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("tokenType");
+            return expectedType.equals(tokenType);
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
 }

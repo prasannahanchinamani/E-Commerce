@@ -4,7 +4,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public class LoginRequest {
+    @jakarta.validation.constraints.Email
+    @jakarta.validation.constraints.NotBlank
     private String email;
+    @jakarta.validation.constraints.NotBlank
     private String password;
 
     public String getEmail() {

@@ -26,6 +26,23 @@ public class BuyerController {
         List<Address> addresses = buyerService.getAddresses(authentication.getName());
         return ResponseEntity.ok(new ApiResponse<>(true, addresses));
     }
+    @PutMapping("/addresses/{id}")
+    public ResponseEntity<ApiResponse<Address>> updateAddress(
+            @PathVariable Long id,
+            @RequestBody AddressRequest request,
+            Authentication authentication) {
+        Address address = buyerService.updateAddress(authentication.getName(), id, request);
+        return ResponseEntity.ok(new ApiResponse<>(true, address));
+    }
+
+    @DeleteMapping("/addresses/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteAddress(
+            @PathVariable Long id,
+            Authentication authentication) {
+        buyerService.deleteAddress(authentication.getName(), id);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Address deleted successfully"));
+    }
+
     @PostMapping("/addresses")
     public ResponseEntity<ApiResponse<Address>> addAddress(@RequestBody AddressRequest request,
             Authentication authentication) {

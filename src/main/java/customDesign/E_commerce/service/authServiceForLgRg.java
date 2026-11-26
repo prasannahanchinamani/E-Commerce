@@ -95,12 +95,16 @@ public class authServiceForLgRg {
         response.setRefreshToken(
                 tokenService.refreshToken(user)
         );
+        response.setTokenType("Bearer");
         response.setExpiresIn(3600);
         response.setUser(user);
 
         return response;
     }
     public LoginResponse refreshToken(String token) {
+        if (token == null || !tokenService.isRefreshToken(token)) {
+            throw new BadRequestException("A valid refresh token is required");
+        }
         String email = tokenService.ExtractEmailFromToken(token);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -109,6 +113,7 @@ public class authServiceForLgRg {
         LoginResponse response = new LoginResponse();
         response.setAccessToken(tokenService.generateToken(user));
         response.setRefreshToken(tokenService.refreshToken(user));
+        response.setTokenType("Bearer");
         response.setExpiresIn(3600);
         return response;
     }

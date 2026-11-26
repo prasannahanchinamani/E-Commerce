@@ -24,7 +24,7 @@ public class ProductController {
             @PathVariable Long categoryId) {
 
         List<Product> products =
-                productRepository.findByCategoryId(categoryId);
+                productRepository.findByCategoryIdAndActiveTrue(categoryId);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

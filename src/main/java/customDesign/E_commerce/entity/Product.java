@@ -25,6 +25,8 @@ public class Product {
 
     private Integer stock;
 
+    private String sellerEmail;
+
     private boolean active = true;
 
     public ProductCategory getCategory() {
@@ -42,6 +44,10 @@ public class Product {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public String getSellerEmail() { return sellerEmail; }
+
+    public void setSellerEmail(String sellerEmail) { this.sellerEmail = sellerEmail; }
 
     public Integer getStock() {
         return stock;

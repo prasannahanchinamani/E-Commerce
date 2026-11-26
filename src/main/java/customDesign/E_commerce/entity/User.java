@@ -28,6 +28,7 @@ public class User {
     private String ifsc;
     private String story;
 
+
     public String getStory() { return story; }
     public void setStory(String story) { this.story = story; }
 

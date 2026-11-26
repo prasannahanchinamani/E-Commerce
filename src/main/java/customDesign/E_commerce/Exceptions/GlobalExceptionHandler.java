@@ -22,11 +22,16 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<String>>handlerBadRequestException(BadRequestException ex){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false,ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,ex.getMessage()));
     }
     @ExceptionHandler(NotAllowedFileException.class)
     public ResponseEntity<ApiResponse<String>>handleNotAllowedFileException(NotAllowedFileException ex){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse<>(false,ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false,ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<String>>handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>(false, ex.getMessage()));
     }
 
 }

@@ -19,13 +19,13 @@ public class AuthController {
     authServiceForLgRg registerLoginService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<RegisterResponse>>register(@RequestBody RegisterRequest registerRequest){
+    public ResponseEntity<ApiResponse<RegisterResponse>>register(@Valid @RequestBody RegisterRequest registerRequest){
         RegisterResponse registerResponse=registerLoginService.registerBuyer(registerRequest);
 //        return new ResponseEntity<>(registerResponse, HttpStatus.CREATED);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, registerResponse));
     }
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>>login(@RequestBody LoginRequest loginRequest) throws BadRequestException {
+    public ResponseEntity<ApiResponse<LoginResponse>>login(@Valid @RequestBody LoginRequest loginRequest) throws BadRequestException {
        LoginResponse loginResponse=registerLoginService.login(loginRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(true, loginResponse));
     }
