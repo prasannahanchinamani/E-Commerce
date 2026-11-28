@@ -20,6 +20,10 @@ public class RefreshToken {
     @Column(nullable = false)
     private Instant expiresAt;
 
+    private String sessionId;
+
+    private Instant lastActivityAt;
+
     private boolean revoked;
 
     public Long getId() { return id; }
@@ -32,4 +36,8 @@ public class RefreshToken {
     public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
     public boolean isRevoked() { return revoked; }
     public void setRevoked(boolean revoked) { this.revoked = revoked; }
+    public String getSessionId() { return sessionId; }
+    public void setSessionId(String sessionId) { this.sessionId = sessionId; }
+    public Instant getLastActivityAt() { return lastActivityAt; }
+    public void setLastActivityAt(Instant lastActivityAt) { this.lastActivityAt = lastActivityAt; }
 }

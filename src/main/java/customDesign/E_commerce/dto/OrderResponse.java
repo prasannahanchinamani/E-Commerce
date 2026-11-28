@@ -15,5 +15,11 @@ public record OrderResponse(
         BigDecimal sellerPayout,
         String status,
         AddressResponse address,
-        Instant createdAt
+        Instant createdAt,
+        java.util.List<OrderItemResponse> items,
+        String paymentStatus,
+        Instant expectedDeliveryAt,
+        Instant deliveredAt,
+        String cancellationReason,
+        Instant cancelledAt
 ) {}

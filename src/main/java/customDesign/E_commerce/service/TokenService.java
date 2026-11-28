@@ -13,6 +13,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class TokenService {
@@ -24,14 +25,22 @@ public class TokenService {
         if(user == null){
             throw  new UserNotFoundException("User not found");
         }
-        return buildToken(user, "access", 1000L * 60 * 15);
+        return generateToken(user, UUID.randomUUID().toString());
     }
 
     public String refreshToken(User user){
-        return buildToken(user, "refresh", 1000L * 60 * 60 * 24 * 7);
+        return refreshToken(user, UUID.randomUUID().toString());
     }
 
-    private String buildToken(User user, String tokenType, long ttlMillis) {
+    public String generateToken(User user, String sessionId) {
+        return buildToken(user, "access", 1000L * 60 * 15, sessionId);
+    }
+
+    public String refreshToken(User user, String sessionId) {
+        return buildToken(user, "refresh", 1000L * 60 * 60 * 24 * 7, sessionId);
+    }
+
+    private String buildToken(User user, String tokenType, long ttlMillis, String sessionId) {
         if(user == null){
             throw new UserNotFoundException("User not found");
         }
@@ -39,6 +48,8 @@ public class TokenService {
         claims.put("userName", user.getName());
         claims.put("role", user.getRole().name());
         claims.put("tokenType", tokenType);
+        claims.put("sessionId", sessionId);
+        claims.put("jti", UUID.randomUUID().toString());
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getEmail())
@@ -70,6 +81,11 @@ public class TokenService {
 
     public boolean isRefreshToken(String token) {
         return isTokenType(token, "refresh");
+    }
+
+    public String extractSessionId(String token) {
+        return Jwts.parser().verifyWith(generateTokenKey()).build()
+                .parseSignedClaims(token).getPayload().get("sessionId", String.class);
     }
 
     private boolean isTokenType(String token, String expectedType) {

@@ -27,7 +27,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class authServiceForLgRg {
@@ -79,13 +79,7 @@ public class authServiceForLgRg {
             throw new BadRequestException("Public registration is allowed only for BUYER or SELLER roles");
         }
         user.setRole(Role.valueOf(request.getRole().name()));
-        user.setEmailVerified(false);
-        String verificationToken = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes(32));
-        user.setEmailVerificationTokenHash(sha256(verificationToken));
-        user.setEmailVerificationExpiresAt(Instant.now().plus(Duration.ofHours(24)));
         User savedUser = userRepository.save(user);
-        String link = frontendUrl + "/verify-email?token=" + verificationToken;
-        mailService.sendEmail(from, savedUser.getEmail(), "Verify your email", link);
         RegisterResponse response = new RegisterResponse(savedUser.getName(), savedUser.getEmail(), savedUser.getRole().name(), message);
         response.setId(savedUser.getId());
         response.setPhone(savedUser.getNumber());
@@ -111,12 +105,10 @@ public class authServiceForLgRg {
         }
         LoginResponse response = new LoginResponse();
 
-        response.setAccessToken(
-                tokenService.generateToken(user)
-        );
-
-        String refresh = tokenService.refreshToken(user);
-        storeRefreshToken(user, refresh);
+        String sessionId = UUID.randomUUID().toString();
+        response.setAccessToken(tokenService.generateToken(user, sessionId));
+        String refresh = tokenService.refreshToken(user, sessionId);
+        storeRefreshToken(user, refresh, sessionId);
         response.setRefreshToken(refresh);
         response.setTokenType("Bearer");
         response.setExpiresIn(900);
@@ -129,22 +121,27 @@ public class authServiceForLgRg {
         if (token == null || !tokenService.isRefreshToken(token)) {
             throw new BadRequestException("A valid refresh token is required");
         }
-        RefreshToken existing = refreshTokenRepository.findByTokenHash(sha256(token))
+        RefreshToken existing = refreshTokenRepository.findByTokenHashForUpdate(sha256(token))
                 .orElseThrow(() -> new BadRequestException("A valid refresh token is required"));
-        if (existing.isRevoked() || existing.getExpiresAt().isBefore(Instant.now())) {
+        Instant now = Instant.now();
+        if (existing.isRevoked() || existing.getExpiresAt().isBefore(now)
+                || existing.getSessionId() == null || existing.getLastActivityAt() == null
+                || existing.getLastActivityAt().plus(Duration.ofMinutes(10)).isBefore(now)) {
+            existing.setRevoked(true);
+            refreshTokenRepository.save(existing);
             throw new BadRequestException("A valid refresh token is required");
         }
-        existing.setRevoked(true);
-        refreshTokenRepository.save(existing);
 
         String email = tokenService.ExtractEmailFromToken(token);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-        String newRefresh = tokenService.refreshToken(user);
-        storeRefreshToken(user, newRefresh);
+        String newRefresh = tokenService.refreshToken(user, existing.getSessionId());
+        existing.setTokenHash(sha256(newRefresh));
+        existing.setLastActivityAt(now);
+        refreshTokenRepository.save(existing);
 
         LoginResponse response = new LoginResponse();
-        response.setAccessToken(tokenService.generateToken(user));
+        response.setAccessToken(tokenService.generateToken(user, existing.getSessionId()));
         response.setRefreshToken(newRefresh);
         response.setTokenType("Bearer");
         response.setExpiresIn(900);
@@ -156,7 +153,8 @@ public class authServiceForLgRg {
 
         User user = userRepository.findByEmail(request.getEmail()).orElse(null);
         if (user == null) {
-            return "If the email exists, a reset link has been sent.";
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Email is not registered");
         }
         resetTokenRepository.deleteByUser(user);
         byte[] bytes = new byte[32];
@@ -168,7 +166,7 @@ public class authServiceForLgRg {
         resetToken.setExpiresAt(Instant.now().plus(TOKEN_TTL));
         resetTokenRepository.saveAndFlush(resetToken);
         String link = frontendUrl + "/reset-password?token=" + rawToken;
-        mailService.sendEmail( from, user.getEmail(),"Password Reset Request", link);
+        mailService.sendEmail(from, user.getEmail(),"Password Reset Request", link);
         return "Password reset link sent successfully to " + user.getEmail();
     }
     @Transactional
@@ -205,39 +203,14 @@ public class authServiceForLgRg {
         });
     }
 
-    private void storeRefreshToken(User user, String rawToken) {
+    private void storeRefreshToken(User user, String rawToken, String sessionId) {
         RefreshToken token = new RefreshToken();
         token.setUser(user);
         token.setTokenHash(sha256(rawToken));
         token.setExpiresAt(Instant.now().plus(Duration.ofDays(7)));
+        token.setSessionId(sessionId);
+        token.setLastActivityAt(Instant.now());
         refreshTokenRepository.save(token);
-    }
-
-    @Transactional
-    public String verifyEmail(VerifyEmailRequest request) {
-        if (request == null || request.getToken() == null || request.getToken().isBlank()) {
-            throw new BadRequestException("Verification token is required");
-        }
-        String hash = sha256(request.getToken());
-        User user = userRepository.findAll().stream()
-                .filter(candidate -> hash.equals(candidate.getEmailVerificationTokenHash()))
-                .findFirst()
-                .orElseThrow(() -> new BadRequestException("Invalid or expired verification token"));
-        if (user.getEmailVerificationExpiresAt() == null
-                || user.getEmailVerificationExpiresAt().isBefore(Instant.now())) {
-            throw new BadRequestException("Invalid or expired verification token");
-        }
-        user.setEmailVerified(true);
-        user.setEmailVerificationTokenHash(null);
-        user.setEmailVerificationExpiresAt(null);
-        userRepository.save(user);
-        return "Email verified successfully";
-    }
-
-    private static byte[] randomBytes(int length) {
-        byte[] bytes = new byte[length];
-        new SecureRandom().nextBytes(bytes);
-        return bytes;
     }
 
     private static String sha256(String value) {

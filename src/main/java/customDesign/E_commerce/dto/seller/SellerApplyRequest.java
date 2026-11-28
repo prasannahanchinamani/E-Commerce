@@ -8,7 +8,6 @@ public class SellerApplyRequest {
     private String bio;
     private List<Long> categoryIds;
     private List<Long> portfolioImageIds;
-    private String mediatorCode;      // e.g. "MEERA-CRAFTS"
     private String accountName;
     @jakarta.validation.constraints.Pattern(regexp = "\\d{9,18}", message = "accountNumber must contain 9 to 18 digits")
     private String accountNumber;
@@ -25,8 +24,6 @@ public class SellerApplyRequest {
     public void setCategoryIds(List<Long> categoryIds) { this.categoryIds = categoryIds; }
     public List<Long> getPortfolioImageIds() { return portfolioImageIds; }
     public void setPortfolioImageIds(List<Long> portfolioImageIds) { this.portfolioImageIds = portfolioImageIds; }
-    public String getMediatorCode() { return mediatorCode; }
-    public void setMediatorCode(String mediatorCode) { this.mediatorCode = mediatorCode; }
     public String getAccountName() { return accountName; }
     public void setAccountName(String accountName) { this.accountName = accountName; }
     public String getAccountNumber() { return accountNumber; }

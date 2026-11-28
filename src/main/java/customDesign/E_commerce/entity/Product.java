@@ -33,6 +33,9 @@ public class Product {
     private java.math.BigDecimal bulkPrice;
     private Integer minBulkQty;
     private Integer daysToMake;
+    private Integer estimatedProductionHours;
+    @Column(length = 2000)
+    private String specifications;
 
     public Long getDesignTypeId() { return designTypeId; }
     public void setDesignTypeId(Long designTypeId) { this.designTypeId = designTypeId; }
@@ -42,6 +45,10 @@ public class Product {
     public void setMinBulkQty(Integer minBulkQty) { this.minBulkQty = minBulkQty; }
     public Integer getDaysToMake() { return daysToMake; }
     public void setDaysToMake(Integer daysToMake) { this.daysToMake = daysToMake; }
+    public Integer getEstimatedProductionHours() { return estimatedProductionHours; }
+    public void setEstimatedProductionHours(Integer hours) { this.estimatedProductionHours = hours; }
+    public String getSpecifications() { return specifications; }
+    public void setSpecifications(String specifications) { this.specifications = specifications; }
 
     public ProductCategory getCategory() {
         return category;

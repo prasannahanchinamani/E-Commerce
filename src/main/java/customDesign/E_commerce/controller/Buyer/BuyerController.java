@@ -3,12 +3,15 @@ package customDesign.E_commerce.controller.Buyer;
 import customDesign.E_commerce.dto.AddressRequest;
 import customDesign.E_commerce.dto.AddressResponse;
 import customDesign.E_commerce.dto.CreateOrderRequest;
+import customDesign.E_commerce.dto.CancelOrderRequest;
 import customDesign.E_commerce.dto.OrderResponse;
 import customDesign.E_commerce.dto.PagedApiResponse;
 import customDesign.E_commerce.dto.PageInfo;
 import customDesign.E_commerce.dto.ApiResponse;
+import customDesign.E_commerce.dto.CartDtos.*;
 import customDesign.E_commerce.entity.Address;
 import customDesign.E_commerce.service.buyer.BuyerService;
+import customDesign.E_commerce.service.buyer.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +28,8 @@ public class BuyerController {
 
     @Autowired
     private BuyerService buyerService;
+    @Autowired
+    private CartService cartService;
 
     @GetMapping("/addresses")
     public ResponseEntity<ApiResponse<List<AddressResponse>>> getAddresses(Authentication authentication) {
@@ -77,14 +82,54 @@ public class BuyerController {
 
     @PutMapping("/orders/{id}/cancel")
     public ApiResponse<OrderResponse> cancelOrder(@PathVariable Long id,
+                                                   @jakarta.validation.Valid @RequestBody CancelOrderRequest request,
                                                    Authentication authentication) {
-        return new ApiResponse<>(true, buyerService.cancelOrder(authentication.getName(), id));
+        return new ApiResponse<>(true, "Order cancelled successfully",
+                buyerService.cancelOrder(authentication.getName(), id, request.getReason()));
     }
 
-    @PutMapping("/orders/{id}/confirm-delivery")
+    @PostMapping("/orders/{id}/confirm-delivery")
     public ApiResponse<OrderResponse> confirmDelivery(@PathVariable Long id,
                                                        Authentication authentication) {
-        return new ApiResponse<>(true, buyerService.confirmDelivery(authentication.getName(), id));
+        return new ApiResponse<>(true, "Delivery confirmed. Thank you!",
+                buyerService.confirmDelivery(authentication.getName(), id));
+    }
+
+    @GetMapping("/cart")
+    public ApiResponse<CartResponse> getCart(Authentication authentication) {
+        return new ApiResponse<>(true, cartService.getCart(authentication.getName()));
+    }
+
+    @PostMapping("/cart/items")
+    public ResponseEntity<ApiResponse<CartResponse>> addCartItem(
+            @jakarta.validation.Valid @RequestBody AddCartItemRequest request, Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, cartService.addItem(authentication.getName(), request)));
+    }
+
+    @PutMapping("/cart/items/{itemId}")
+    public ApiResponse<CartResponse> updateCartItem(@PathVariable Long itemId,
+            @jakarta.validation.Valid @RequestBody UpdateCartItemRequest request, Authentication authentication) {
+        return new ApiResponse<>(true, cartService.updateItem(authentication.getName(), itemId, request.quantity()));
+    }
+
+    @DeleteMapping("/cart/items/{itemId}")
+    public ApiResponse<CartResponse> removeCartItem(@PathVariable Long itemId, Authentication authentication) {
+        return new ApiResponse<>(true, cartService.removeItem(authentication.getName(), itemId));
+    }
+
+    @DeleteMapping("/cart")
+    public ApiResponse<CartResponse> clearCart(Authentication authentication) {
+        return new ApiResponse<>(true, cartService.clear(authentication.getName()));
+    }
+
+    @PostMapping("/cart/checkout")
+    public ResponseEntity<ApiResponse<OrderResponse>> checkout(
+            @jakarta.validation.Valid @RequestBody CheckoutRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        Long orderId = cartService.checkout(email, request.addressId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(true, buyerService.getOrder(email, orderId)));
     }
 
     private AddressResponse toAddressResponse(Address address) {

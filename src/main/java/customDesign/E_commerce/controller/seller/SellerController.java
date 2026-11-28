@@ -61,6 +61,12 @@ public class SellerController {
         return ResponseEntity.ok(new ApiResponse<>(true, sellerService.getProducts(authentication.getName())));
     }
 
+    @GetMapping("/products/{id}")
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<ApiResponse<Product>> getProduct(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(new ApiResponse<>(true, sellerService.getProduct(authentication.getName(), id)));
+    }
+
     @PostMapping("/products")
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<ApiResponse<Product>> createProduct(@RequestBody ProductRequest request,

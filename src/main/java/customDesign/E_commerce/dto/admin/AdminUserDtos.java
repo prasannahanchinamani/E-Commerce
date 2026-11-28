@@ -7,6 +7,7 @@ public final class AdminUserDtos {
     public record UpdateRoleRequest(String role) {}
     public record CreateAdminRequest(String name, String email, String role) {}
     public record CreateMediatorRequest(String name, String email, String phone, String shopName) {}
+    public record AssignSellerMediatorRequest(Long mediatorId) {}
     public record ApproveOrSuspendRequest(String note, String reason) {}
 
     public record UserResponse(Long id, String name, String email, String phone, String role,

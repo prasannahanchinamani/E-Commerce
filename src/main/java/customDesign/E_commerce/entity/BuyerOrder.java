@@ -45,12 +45,18 @@ public class BuyerOrder {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
     private Address address;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<BuyerOrderItem> items = new java.util.ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     private String note;
     private String trackingInfo;
+    @Column(length = 500)
+    private String cancellationReason;
+    private Instant cancelledAt;
+    private Instant deliveredAt;
 
     @PrePersist
     protected void onCreate() { createdAt = Instant.now(); }
@@ -77,10 +83,18 @@ public class BuyerOrder {
     public void setStatus(OrderStatus status) { this.status = status; }
     public Address getAddress() { return address; }
     public void setAddress(Address address) { this.address = address; }
+    public java.util.List<BuyerOrderItem> getItems() { return items; }
+    public void addItem(BuyerOrderItem item) { items.add(item); item.setOrder(this); }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
     public String getTrackingInfo() { return trackingInfo; }
     public void setTrackingInfo(String trackingInfo) { this.trackingInfo = trackingInfo; }
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+    public Instant getCancelledAt() { return cancelledAt; }
+    public void setCancelledAt(Instant cancelledAt) { this.cancelledAt = cancelledAt; }
+    public Instant getDeliveredAt() { return deliveredAt; }
+    public void setDeliveredAt(Instant deliveredAt) { this.deliveredAt = deliveredAt; }
 }

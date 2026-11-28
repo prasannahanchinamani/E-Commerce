@@ -10,6 +10,7 @@ import customDesign.E_commerce.dto.CreateOrderRequest;
 import customDesign.E_commerce.dto.OrderResponse;
 import customDesign.E_commerce.dto.AddressResponse;
 import customDesign.E_commerce.entity.BuyerOrder;
+import customDesign.E_commerce.entity.BuyerOrderItem;
 import customDesign.E_commerce.entity.OrderType;
 import customDesign.E_commerce.entity.OrderStatus;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,12 @@ public class BuyerService {
 
     @Transactional
     public Address addAddress(String email, AddressRequest req) {
+        boolean duplicate = addressRepository.findByUserEmail(email).stream()
+                .anyMatch(existing -> sameAddress(existing, req));
+        if (duplicate) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "That address is already saved");
+        }
         Address address = new Address();
         address.setUserEmail(email);
         address.setFullName(req.getFullName());
@@ -66,6 +73,12 @@ public class BuyerService {
         Address address = addressRepository.findByIdAndUserEmail(id, email)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Address not found"));
+        boolean duplicate = addressRepository.findByUserEmail(email).stream()
+                .anyMatch(existing -> !existing.getId().equals(id) && sameAddress(existing, req));
+        if (duplicate) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "That address is already saved");
+        }
         address.setFullName(req.getFullName());
         address.setPhone(req.getPhone());
         address.setLine1(req.getLine1());
@@ -87,13 +100,17 @@ public class BuyerService {
 
     @Transactional
     public OrderResponse createOrder(String email, CreateOrderRequest request) {
-        customDesign.E_commerce.entity.Product listing = productRepository.findById(request.getListingId())
+        customDesign.E_commerce.entity.Product listing = productRepository.findByIdForUpdate(request.getListingId())
                 .filter(customDesign.E_commerce.entity.Product::isActive)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Listing not found"));
         Address address = addressRepository.findByIdAndUserEmail(request.getAddressId(), email)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Address not found"));
+        if (listing.getStock() != null && request.getQuantity() > listing.getStock()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT, "Requested quantity exceeds available stock");
+        }
 
         boolean bulk = request.getQuantity() >= 50;
         java.math.BigDecimal unitPrice = bulk && listing.getBulkPrice() != null
@@ -124,6 +141,21 @@ public class BuyerService {
         order.setStatus(OrderStatus.AWAITING_PAYMENT);
         order.setAddress(address);
         order.setNote(request.getNote());
+        BuyerOrderItem item = new BuyerOrderItem();
+        item.setProductId(listing.getId());
+        item.setProductName(listing.getName());
+        item.setProductDescription(listing.getDescription());
+        item.setSpecifications(listing.getSpecifications());
+        item.setImageUrl(listing.getImageUrl());
+        item.setCategoryId(listing.getCategory() == null ? null : listing.getCategory().getId());
+        item.setCategoryName(listing.getCategory() == null ? null : listing.getCategory().getName());
+        item.setSellerEmail(listing.getSellerEmail());
+        item.setUnitPrice(unitPrice);
+        item.setQuantity(request.getQuantity());
+        item.setEstimatedProductionHours(listing.getEstimatedProductionHours());
+        item.setEstimatedProductionDays(listing.getDaysToMake());
+        order.addItem(item);
+        if (listing.getStock() != null) listing.setStock(listing.getStock() - request.getQuantity());
         return toOrderResponse(buyerOrderRepository.save(order));
     }
 
@@ -154,18 +186,16 @@ public class BuyerService {
     }
 
     @Transactional
-    public OrderResponse cancelOrder(String email, Long id) {
+    public OrderResponse cancelOrder(String email, Long id, String reason) {
         BuyerOrder order = buyerOrderRepository.findByIdAndBuyerEmail(id, email)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Order not found"));
-        if (order.getStatus() != OrderStatus.AWAITING_PAYMENT && order.getStatus() != OrderStatus.PAID) {
+        if (order.getStatus() != OrderStatus.AWAITING_PAYMENT) {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.CONFLICT, "Order can no longer be cancelled");
         }
-        if (order.getStatus() == OrderStatus.PAID) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.CONFLICT, "Paid orders require an admin or refund flow");
-        }
+        order.setCancellationReason(reason.trim());
+        order.setCancelledAt(java.time.Instant.now());
         order.setStatus(OrderStatus.CANCELLED);
         return toOrderResponse(buyerOrderRepository.save(order));
     }
@@ -175,11 +205,12 @@ public class BuyerService {
         BuyerOrder order = buyerOrderRepository.findByIdAndBuyerEmail(id, email)
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Order not found"));
-        if (order.getStatus() != OrderStatus.DELIVERED) {
+        if (order.getStatus() != OrderStatus.IN_PRODUCTION) {
             throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.CONFLICT, "Order must be delivered before confirmation");
+                    org.springframework.http.HttpStatus.CONFLICT, "Order must be in production or shipped before delivery confirmation");
         }
-        order.setStatus(OrderStatus.COMPLETED);
+        order.setStatus(OrderStatus.DELIVERED);
+        order.setDeliveredAt(java.time.Instant.now());
         return toOrderResponse(buyerOrderRepository.save(order));
     }
 
@@ -191,10 +222,34 @@ public class BuyerService {
         Long buyerId = userRepository.findByEmail(order.getBuyerEmail()).map(customDesign.E_commerce.entity.User::getId).orElse(null);
         Long sellerId = order.getSellerEmail() == null ? null : userRepository.findByEmail(order.getSellerEmail())
                 .map(customDesign.E_commerce.entity.User::getId).orElse(null);
+        java.util.List<customDesign.E_commerce.dto.OrderItemResponse> items = order.getItems().stream().map(item -> {
+            customDesign.E_commerce.entity.User seller = userRepository.findByEmail(item.getSellerEmail()).orElse(null);
+            return new customDesign.E_commerce.dto.OrderItemResponse(
+                    item.getProductId(),
+                    item.getProductName(), item.getProductDescription(), item.getSpecifications(),
+                    item.getImageUrl(), item.getCategoryId(), item.getCategoryName(),
+                    seller == null ? null : seller.getId(), seller == null ? null : seller.getName(),
+                    item.getSellerEmail(), item.getUnitPrice(), item.getQuantity(),
+                    item.getUnitPrice().multiply(java.math.BigDecimal.valueOf(item.getQuantity())),
+                    item.getEstimatedProductionDays(), item.getEstimatedProductionHours(),
+                    item.getActualProductionHours(),
+                    item.getProductionStartedAt(), item.getProductionCompletedAt());
+        }).toList();
         return new OrderResponse(order.getId(), buyerId, sellerId, order.getType().name(),
                 order.getQuantity(), order.getAmount(), order.getCommissionRate(),
                 order.getCommissionAmount(), order.getSellerPayout(), order.getStatus().name(),
-                addressResponse, order.getCreatedAt());
+                addressResponse, order.getCreatedAt(), items,
+                paymentStatus(order.getStatus()),
+                null, order.getDeliveredAt(), order.getCancellationReason(), order.getCancelledAt());
+    }
+
+    private String paymentStatus(OrderStatus status) {
+        return switch (status) {
+            case AWAITING_PAYMENT, CANCELLED -> "UNPAID";
+            case PAID, IN_PRODUCTION, DELIVERED, COMPLETED -> "PAID";
+            case REFUND_REQUESTED -> "REFUND_PENDING";
+            case REFUNDED -> "REFUNDED";
+        };
     }
 
     @Transactional
@@ -203,5 +258,18 @@ public class BuyerService {
                 .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
                         org.springframework.http.HttpStatus.NOT_FOUND, "Address not found"));
         addressRepository.delete(address);
+    }
+
+    private boolean sameAddress(Address saved, AddressRequest request) {
+        return normalized(saved.getLine1()).equals(normalized(request.getLine1()))
+                && normalized(saved.getLine2()).equals(normalized(request.getLine2()))
+                && normalized(saved.getCity()).equals(normalized(request.getCity()))
+                && normalized(saved.getState()).equals(normalized(request.getState()))
+                && normalized(saved.getPincode()).equals(normalized(request.getPincode()))
+                && normalized(saved.getPhone()).equals(normalized(request.getPhone()));
+    }
+
+    private String normalized(String value) {
+        return value == null ? "" : value.trim().replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
     }
 }

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -40,15 +41,15 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/activity")
+    public ResponseEntity<Void> activity(Authentication authentication) {
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<String>>forgetPassword(@Valid @RequestBody ForgetPasswordRequest forgetPasswordRequest){
         registerLoginService.forgetPassword(forgetPasswordRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResponse<>(true, "If the email exists, a reset link has been sent."));
-    }
-
-    @PostMapping("/verify-email")
-    public ResponseEntity<ApiResponse<String>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
-        return ResponseEntity.ok(new ApiResponse<>(true, registerLoginService.verifyEmail(request)));
     }
 
     @PostMapping("/reset-password")

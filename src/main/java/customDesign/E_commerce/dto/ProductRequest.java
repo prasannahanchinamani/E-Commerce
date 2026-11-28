@@ -9,6 +9,9 @@ public class ProductRequest {
     private String imageUrl;
     private Integer stock;
     private Long categoryId;
+    private Integer estimatedProductionHours;
+    private Integer daysToMake;
+    private String specifications;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -22,4 +25,10 @@ public class ProductRequest {
     public void setStock(Integer stock) { this.stock = stock; }
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public Integer getEstimatedProductionHours() { return estimatedProductionHours; }
+    public void setEstimatedProductionHours(Integer hours) { this.estimatedProductionHours = hours; }
+    public Integer getDaysToMake() { return daysToMake; }
+    public void setDaysToMake(Integer daysToMake) { this.daysToMake = daysToMake; }
+    public String getSpecifications() { return specifications; }
+    public void setSpecifications(String specifications) { this.specifications = specifications; }
 }

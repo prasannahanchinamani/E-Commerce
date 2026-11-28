@@ -27,12 +27,6 @@ public class User {
     private String accountNumber;
     private String ifsc;
     private String story;
-    @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = false;
-    @Column(name = "email_verification_token_hash")
-    private String emailVerificationTokenHash;
-    @Column(name = "email_verification_expires_at")
-    private java.time.Instant emailVerificationExpiresAt;
     @Column(name = "two_factor_enabled", nullable = false)
     private boolean twoFactorEnabled = false;
     @Column(name = "two_factor_secret")
@@ -40,19 +34,12 @@ public class User {
     @Column(name = "two_factor_backup_codes", length = 2000)
     private String twoFactorBackupCodes;
 
-    public boolean isEmailVerified() { return emailVerified; }
-    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
     public boolean isTwoFactorEnabled() { return twoFactorEnabled; }
     public void setTwoFactorEnabled(boolean twoFactorEnabled) { this.twoFactorEnabled = twoFactorEnabled; }
     public String getTwoFactorSecret() { return twoFactorSecret; }
     public void setTwoFactorSecret(String twoFactorSecret) { this.twoFactorSecret = twoFactorSecret; }
     public String getTwoFactorBackupCodes() { return twoFactorBackupCodes; }
     public void setTwoFactorBackupCodes(String twoFactorBackupCodes) { this.twoFactorBackupCodes = twoFactorBackupCodes; }
-
-    public String getEmailVerificationTokenHash() { return emailVerificationTokenHash; }
-    public void setEmailVerificationTokenHash(String emailVerificationTokenHash) { this.emailVerificationTokenHash = emailVerificationTokenHash; }
-    public java.time.Instant getEmailVerificationExpiresAt() { return emailVerificationExpiresAt; }
-    public void setEmailVerificationExpiresAt(java.time.Instant emailVerificationExpiresAt) { this.emailVerificationExpiresAt = emailVerificationExpiresAt; }
 
     public String getStory() { return story; }
     public void setStory(String story) { this.story = story; }

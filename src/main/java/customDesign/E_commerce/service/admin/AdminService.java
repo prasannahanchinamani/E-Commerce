@@ -103,6 +103,22 @@ public class AdminService {
 
     @Transactional public StatusResponse updateSellerStatus(Long id,UpdateStatusRequest request){if(request==null||request.status()==null)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"status is required");User s=findRole(id,Role.SELLER);String status=request.status().toUpperCase();if(!List.of("APPROVED","REJECTED","SUSPENDED").contains(status))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Invalid seller status");s.setStatus(status);users.save(s);audit("SELLER_STATUS_CHANGED","user:"+id);return new StatusResponse(id,status);}
 
+    @Transactional
+    public UserResponse assignSellerMediator(Long sellerId, AssignSellerMediatorRequest request) {
+        if (request == null || request.mediatorId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "mediatorId is required");
+        }
+        User seller = findRole(sellerId, Role.SELLER);
+        User mediator = findRole(request.mediatorId(), Role.MEDIATOR);
+        if (!"APPROVED".equals(mediator.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Mediator must be approved before assignment");
+        }
+        seller.setMediatorId(mediator.getId());
+        users.save(seller);
+        audit("SELLER_MEDIATOR_ASSIGNED", "seller:" + sellerId + ",mediator:" + mediator.getId());
+        return toUser(seller);
+    }
+
     @Transactional(readOnly=true)
     public PagedApiResponse<customDesign.E_commerce.dto.admin.AdminAuditDtos.AuditResponse> auditLogs(Long actorId,String action,Instant from,Instant to,int page,int size){
         Pageable pageable=PageRequest.of(Math.max(page,0),Math.min(Math.max(size,1),100),Sort.by(Sort.Direction.DESC,"at"));Page<AuditLog> result=auditLogs.search(actorId,action,from,to,pageable);

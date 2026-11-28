@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/api/v1/auth/activity").authenticated()
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/public/**",
@@ -37,6 +38,7 @@ public class SecurityConfig {
                                 "/h2-console/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/buyer/**").hasRole("BUYER")
+                        .requestMatchers("/api/v1/seller/invitations/**").hasAnyRole("BUYER", "SELLER")
                         .requestMatchers("/api/v1/seller/apply").hasAnyRole("BUYER","SELLER")
                         .requestMatchers("/api/v1/seller/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/mediator/**").hasRole("MEDIATOR")
@@ -49,7 +51,13 @@ public class SecurityConfig {
                             res.setStatus(401);
                             res.setContentType("application/json");
                             res.getWriter().write(
-                                    "{\"success\":false,\"message\":\"Login required\"}");
+                                    "{\"success\":false,\"message\":\"Login required\",\"data\":null}");
+                        })
+                        .accessDeniedHandler((req, res, ex) -> {
+                            res.setStatus(403);
+                            res.setContentType("application/json");
+                            res.getWriter().write(
+                                    "{\"success\":false,\"message\":\"Access denied\",\"data\":null}");
                         })
                 )
                 // check valid user and token before processing any request

@@ -24,6 +24,7 @@ import customDesign.E_commerce.repository.PortfolioRepository;
 import customDesign.E_commerce.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -49,6 +50,7 @@ public class SellerService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Transactional
     public String acceptInvitation(String email, String token) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -67,7 +69,7 @@ public class SellerService {
         }
         user.setRole(Role.SELLER);
         user.setMediatorId(invite.getMediatorId());
-        user.setStatus("PENDING");
+        user.setStatus("INVITED");
         user.setCategoryIds(invite.getCategoryIds().isEmpty() ? null :
                 invite.getCategoryIds().stream().map(String::valueOf)
                         .collect(java.util.stream.Collectors.joining(",")));
@@ -88,14 +90,7 @@ public class SellerService {
         user.setRole(Role.SELLER);
         user.setShopName(req.getShopName());
         user.setBio(req.getBio());
-//        user.setMediatorCode(req.getMediatorCode());
         user.setAccountName(req.getAccountName());
-        if (req.getMediatorCode() != null && !req.getMediatorCode().isBlank()) {
-            User mediator = userRepository.findByMediatorCode(req.getMediatorCode().trim())
-                    .filter(u -> u.getRole() == Role.MEDIATOR)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid mediator code"));
-            user.setMediatorId(mediator.getId());
-        }
         user.setAccountNumber(req.getAccountNumber());
 //        user.setInstagramId(req.getInstagramId());
         user.setStatus("PENDING");
@@ -165,6 +160,12 @@ public class SellerService {
         return productRepository.findBySellerEmail(email);
     }
 
+    public Product getProduct(String email, Long id) {
+        return productRepository.findByIdAndSellerEmail(id, email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Oops! This product seems to be playing hide and seek. We couldn't find it!"));
+    }
+
     public Product createProduct(String email, ProductRequest req) {
         if (req.getName() == null || req.getName().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product name is required");
@@ -180,6 +181,9 @@ public class SellerService {
         product.setPrice(req.getPrice());
         product.setImageUrl(req.getImageUrl());
         product.setStock(req.getStock() == null ? 0 : Math.max(req.getStock(), 0));
+        product.setEstimatedProductionHours(req.getEstimatedProductionHours());
+        product.setDaysToMake(req.getDaysToMake());
+        product.setSpecifications(req.getSpecifications());
         product.setCategory(category);
         product.setSellerEmail(email);
         product.setActive(true);
@@ -197,6 +201,9 @@ public class SellerService {
         }
         if (req.getImageUrl() != null) product.setImageUrl(req.getImageUrl());
         if (req.getStock() != null) product.setStock(Math.max(req.getStock(), 0));
+        if (req.getEstimatedProductionHours() != null) product.setEstimatedProductionHours(req.getEstimatedProductionHours());
+        if (req.getDaysToMake() != null) product.setDaysToMake(req.getDaysToMake());
+        if (req.getSpecifications() != null) product.setSpecifications(req.getSpecifications());
         if (req.getCategoryId() != null) {
             ProductCategory category = categoryRepository.findById(req.getCategoryId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));

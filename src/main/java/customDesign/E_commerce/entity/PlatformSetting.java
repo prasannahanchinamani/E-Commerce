@@ -6,9 +6,9 @@ import jakarta.persistence.*;
 @Table(name = "platform_settings")
 public class PlatformSetting {
     @Id
-    @Column(length = 100)
+    @Column(name = "\"KEY\"", length = 100)
     private String key;
-    @Column(length = 4000)
+    @Column(name = "\"VALUE\"", length = 4000)
     private String value;
 
     public String getKey() { return key; }
